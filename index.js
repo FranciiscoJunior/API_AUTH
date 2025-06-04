@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
 })
 
 // Private Route - Middleware de autenticação
-app.get("/auth/:id", async (req, res) => {
+app.get("/auth/:id", checkToken, async (req, res) => {
     const id = req.params.id
 
     //Verificando se o usuário existe
@@ -30,6 +30,26 @@ app.get("/auth/:id", async (req, res) => {
 
     res.status(200).json({user})
 })
+
+function checkToken(req, res, next){
+    
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1]
+
+    if (!token) {
+        return res.status(401).json({ msg: 'Acesso negado, token não fornecido!' })
+    }
+
+    try {
+        const secret = process.env.SECRET
+
+        jwt.verify(token, secret)
+
+        next()
+    } catch (error) {
+        return res.status(403).json({ msg: 'Token inválido!' })
+    }
+}
 
 //Registrando o usuário no banco de dados
 app.post('/auth/register', async (req, res) => {
